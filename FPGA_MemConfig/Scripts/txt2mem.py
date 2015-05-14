@@ -30,7 +30,7 @@ with open('../TextFiles/Reg.txt') as f1:
 
 f2=open('../TextFiles/FPE_Wrapper.h','w')
 cnt = 0
-with open('../FPGA_BitFiles/FPE_Wrapper.rbt','r') as f1:
+with open('../../FPGA_BitFiles/FPE_Wrapper.rbt','r') as f1:
         for line in f1:
                 cnt = cnt + 1
                 nl = line.rstrip('\n\r')

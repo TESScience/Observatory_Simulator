@@ -1,0 +1,23 @@
+Directories:
+
+FPGA_BitFiles
+   This directory contains three separate bitfiles:
+   FPE_Wrapper_CCD.rbt : This is the firmware code for the FPE. It takes data from the CCDs and transmits the pixels.
+   FPE_Wrapper_RampData.rbt : This is the alternative firmware code for the FPE. It ignores any CCD data and instead generates a ramp.
+   GSE_DHUWrapper.bit : This is the Observatory Simulator firmware code. 
+
+FPGA_HskInterpret
+   This directory contains the Excel spreadsheet used to translate housekeeping raw data into voltage values.
+
+FPGA_MemConfig
+   This directory contains the files needed to generate the memory values for the FPE, including Clock Level Voltages, Housekeeping, Registers, Program, an d Sequence. 
+
+An example of replacing the Sequence Memory:
+
+1. Generate a new SeqMem.txt file from the spreadsheet FPGA_MemConfig/Artix_FPE_MemConfig.xls. This is done by selecting the blue column from the SeqMem tab, and saving it into a txt file in the FPGA_MemConfig/TextFiles directory.
+2. Enter "dos2unix SeqMem.txt" onto the command line to convert from DOS to UNIX format.
+3. The FPE bitfile will be generated along with the files. There are two choices in the bitfiles directory.  Be sure to copy the one you want into the FPE_Wrapper.rbt file before running the script. Enter "cp FPE_Wrapper_CCD.rbt FPE_Wrapper.rbt" if you want the FPE that will take data from the CCDs.
+4. Change directories into the FPGA_MemConfig/Scripts directory.
+5. Type "python txt2mem.py"
+6. All updated files will be in the FPGA_MemConfig/TextFiles directory.
+
