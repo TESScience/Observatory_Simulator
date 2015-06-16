@@ -113,7 +113,7 @@ size_t parsehdr(const uint8_t *buf, size_t len, struct packet *pkt)
  *  \param len Number of bytes in the raw data buffer
  *  \param pkt Packet pointer to fill
  *
- *  \returns Number of data bytes in the packet
+ *  \returns Number of data values in the packet
  */
 size_t parsepkt(const uint8_t *buf, size_t len, struct packet *pkt)
 {
@@ -140,7 +140,7 @@ size_t parsepkt(const uint8_t *buf, size_t len, struct packet *pkt)
   data = pkt->data;
 
   while (len) {
-    *data++ = (buf[1] << 16) | buf[0];
+    *data++ = (buf[1] << 8) | buf[0];
 
     buf += sizeof(uint16_t);
     len -= sizeof(uint16_t);
