@@ -1,0 +1,6 @@
+the_ROM_image:
+{
+	[bootloader]/home/jal/Downloads/FSBL706.elf
+	/home/jal/dhu_gse_workspace_06_02_bitrev8/GSE_DHUWrapper_hw_platform_0/GSE_DHUWrapper.bit
+	/home/jal/dhu_gse_workspace_06_02_bitrev8/OSExpl/Release/OSExpl.elf
+}

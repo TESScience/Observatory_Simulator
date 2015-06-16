@@ -1,0 +1,115 @@
+13:56:03 **** Build of configuration Release for project OSExpl ****
+make all 
+Building file: ../src/OSExpl.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/OSExpl.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/OSExpl.d" -MT"src/OSExpl.d" -o "src/OSExpl.o" "../src/OSExpl.c"
+../src/OSExpl.c: In function 'Cam1RdyIntrHandler':
+../src/OSExpl.c:326:5: warning: passing argument 2 of 'memcpy' makes pointer from integer without a cast [enabled by default]
+     2048);
+     ^
+In file included from /opt/Xilinx/SDK/2014.4/gnu/arm/lin/arm-xilinx-eabi/include/stdint.h:12:0,
+                 from /opt/Xilinx/SDK/2014.4/gnu/arm/lin/lib/gcc/arm-xilinx-eabi/4.8.3/include/stdint.h:9,
+                 from ../../standalone_bsp_0/ps7_cortexa9_0/include/xil_types.h:55,
+                 from ../../standalone_bsp_0/ps7_cortexa9_0/include/xbram.h:122,
+                 from ../src/OSExpl.c:56:
+/opt/Xilinx/SDK/2014.4/gnu/arm/lin/arm-xilinx-eabi/include/string.h:23:8: note: expected 'const void *' but argument is of type 'u32'
+ _PTR   _EXFUN(memcpy,(_PTR, const _PTR, size_t));
+        ^
+../src/OSExpl.c: In function 'Cam1DhuIntrHandler':
+../src/OSExpl.c:359:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  if ((((DHUCamControl_bits *)&iTmp)->ENABLE_ALL) &&
+  ^
+../src/OSExpl.c: At top level:
+../src/OSExpl.c:116:21: warning: 'server_netif' defined but not used [-Wunused-variable]
+ static struct netif server_netif;
+                     ^
+Finished building: ../src/OSExpl.c
+ 
+Building file: ../src/dhu.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/dhu.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/dhu.d" -MT"src/dhu.d" -o "src/dhu.o" "../src/dhu.c"
+Finished building: ../src/dhu.c
+ 
+Building file: ../src/fpe.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/fpe.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/fpe.d" -MT"src/fpe.d" -o "src/fpe.o" "../src/fpe.c"
+../src/fpe.c: In function 'FpeLoadHK':
+../src/fpe.c:192:3: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+   if (((DHUCamControl_bits *)&x)->ENABLE_ALL == 1)
+   ^
+../src/fpe.c: In function 'FpeLoadProg':
+../src/fpe.c:259:3: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+   if (((DHUCamControl_bits *)&x)->ENABLE_ALL == 1)
+   ^
+../src/fpe.c: In function 'FpeLoadClv':
+../src/fpe.c:313:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  if (((DHUCamControl_bits *)&x)->ENABLE_ALL == 1)
+  ^
+../src/fpe.c: In function 'FpeLoadSeq':
+../src/fpe.c:369:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  if (((DHUCamControl_bits *)&x)->ENABLE_ALL == 1)
+  ^
+../src/fpe.c: In function 'FpeLoadReg':
+../src/fpe.c:480:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  if (((DHUCamControl_bits *)&x)->ENABLE_ALL == 1)
+  ^
+Finished building: ../src/fpe.c
+ 
+Building file: ../src/fpeinit.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/fpeinit.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/fpeinit.d" -MT"src/fpeinit.d" -o "src/fpeinit.o" "../src/fpeinit.c"
+../src/fpeinit.c: In function 'xferFpeBuff':
+../src/fpeinit.c:89:2: warning: dereferencing type-punned pointer will break strict-aliasing rules [-Wstrict-aliasing]
+  if (((DHUCamControl_bits *)&x)->ENABLE_ALL == 0)
+  ^
+Finished building: ../src/fpeinit.c
+ 
+Building file: ../src/ip_utils.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/ip_utils.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/ip_utils.d" -MT"src/ip_utils.d" -o "src/ip_utils.o" "../src/ip_utils.c"
+Finished building: ../src/ip_utils.c
+ 
+Building file: ../src/platform.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/platform.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/platform.d" -MT"src/platform.d" -o "src/platform.o" "../src/platform.c"
+Finished building: ../src/platform.c
+ 
+Building file: ../src/platform_zynq.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/platform_zynq.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/platform_zynq.d" -MT"src/platform_zynq.d" -o "src/platform_zynq.o" "../src/platform_zynq.c"
+Finished building: ../src/platform_zynq.c
+ 
+Building file: ../src/server.c
+Invoking: ARM gcc compiler
+arm-xilinx-eabi-gcc -Wall -O2 -c -fmessage-length=0 -MT"src/server.o" -I../../standalone_bsp_0/ps7_cortexa9_0/include -MMD -MP -MF"src/server.d" -MT"src/server.d" -o "src/server.o" "../src/server.c"
+../src/server.c: In function 'udp_cmd_callback':
+../src/server.c:268:11: warning: unused variable 'i' [-Wunused-variable]
+   u16_t   i;
+           ^
+../src/server.c:266:13: warning: unused variable 'cam_data' [-Wunused-variable]
+   uint8_t   cam_data[ DATA_BYTES ];
+             ^
+../src/server.c: In function 'start_application':
+../src/server.c:345:2: warning: passing argument 2 of 'udp_recv' from incompatible pointer type [enabled by default]
+  udp_recv(cmd_pcb_ptr, udp_cmd_callback, NULL);
+  ^
+In file included from ../src/server.c:52:0:
+../../standalone_bsp_0/ps7_cortexa9_0/include/lwip/udp.h:130:18: note: expected 'udp_recv_fn' but argument is of type 'err_t (*)(void *, struct udp_pcb *, struct pbuf *, struct ip_addr *, u16_t)'
+ void             udp_recv       (struct udp_pcb *pcb, udp_recv_fn recv,
+                  ^
+Finished building: ../src/server.c
+ 
+Building target: OSExpl.elf
+Invoking: ARM gcc linker
+arm-xilinx-eabi-gcc -Wl,-T -Wl,../src/lscript.ld -L../../standalone_bsp_0/ps7_cortexa9_0/lib -o "OSExpl.elf"  ./src/OSExpl.o ./src/dhu.o ./src/fpe.o ./src/fpeinit.o ./src/ip_utils.o ./src/platform.o ./src/platform_zynq.o ./src/server.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxil,-llwip4,-lgcc,-lc,--end-group
+Finished building target: OSExpl.elf
+ 
+Invoking: ARM Print Size
+arm-xilinx-eabi-size OSExpl.elf  |tee "OSExpl.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+2477272	   4112	269126092	271607476	103066b4	OSExpl.elf
+Finished building: OSExpl.elf.size
+ 
+
+13:56:06 Build Finished (took 2s.185ms)
+

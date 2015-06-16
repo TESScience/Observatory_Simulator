@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<item value="" key="GSE_DHU_design-bmmFile"/>
+	<item value="GSE_DHU_design" key="programfpga.hwplatform"/>
+	<item value="GSE_DHUWrapper.bit" key="GSE_DHU_design-bitFile"/>
+	<item value="Local" key="GSE_DHU_design-target"/>
+	<item value="Auto Detect" key="GSE_DHU_design-device"/>
+</section>
