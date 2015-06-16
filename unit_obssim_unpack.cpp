@@ -8,6 +8,8 @@ extern "C" {
 
 #include <gtest/gtest.h>
 #include <strings.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "maclin_endian.h"
 
 class Test_obssim_unpack : public ::testing::Test {
@@ -16,9 +18,11 @@ protected:
     pixelcnt = -1;
     frameno = 0;
     pixelindex = 0;
+    mkdir("test",777);
   };
 
   virtual void TearDown() {
+    rmdir("test");
   };
 };
 
@@ -200,6 +204,26 @@ TEST_F(Test_obssim_unpack, parsepkt_nohdr_framecross)
 		pktout.data[((ii) * 2) + 1]);
   }
 }
+
+TEST_F(Test_obssim_unpack, openfile)
+{
+  int fd;
+  struct packet pkt;
+  struct stat st;
+
+  pkt.hdr.size = 4300 * 4300;
+  pkt.hdr.frameno = 0;
+  pkt.hdr.index = 0;
+
+  fd = openfile("./test/", &pkt);
+  ASSERT_GE(0, fd);
+
+  ASSERT_EQ(0, stat("./test/obssim-0.bin",&st));
+
+  close(fd);
+  unlink("./test/obssim-0.bin");
+}
+
 
 int main(int argc, char** argv) {
 
