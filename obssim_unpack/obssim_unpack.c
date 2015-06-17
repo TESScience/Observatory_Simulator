@@ -16,7 +16,7 @@
 #include <assert.h>
 
 static const char usage[] = 
-  "Usage: obssim_unpack <port> <basedir> [<pixelcnt>]\n" \
+  "Usage: obssim_unpack <localip> <port> <basedir> <pixelcnt>\n" \
   " where: <port> is the UDP port number to bind to\n" \
   "        <basedir> is the base directory for stored image files\n" \
   "        <pixelcnt> number of 16-bit values (pixels/hk) in a frame\n\n" \
@@ -180,7 +180,7 @@ int openfile(const char *base, struct packet *pkt)
   snprintf(filename, sizeof(filename),
 	   "%s%s-%d.bin", base, "obssim", pkt->hdr.frameno);
 
-  fd = open(filename, O_CREAT | O_WRONLY, 0444);
+  fd = open(filename, O_CREAT | O_WRONLY, 0666);
 
   return fd;
 }
@@ -199,7 +199,7 @@ int openfile(const char *base, struct packet *pkt)
  *
  */
 void storepkt(const char *base, struct packet *pkt, size_t datacnt,
-	      uint32_t *lastframe, int *lastfd)
+	      uint32_t *lastframe, int *lastfd, off_t *lastpos)
 {
   int fd;
 
@@ -217,9 +217,13 @@ void storepkt(const char *base, struct packet *pkt, size_t datacnt,
   }
 
   /* seek to indexed location within the file */
-  if (lseek(fd, pkt->hdr.index * sizeof(uint16_t), SEEK_SET) < 0) {
-    perror("lseek");
-    return;
+  if (*lastpos != (pkt->hdr.index * sizeof(uint16_t))) {
+    /*
+    if (lseek(fd, pkt->hdr.index * sizeof(uint16_t), SEEK_SET) < 0) {
+      perror("lseek");
+      return;
+    }
+    */
   }
   
   /* write the data */
@@ -230,6 +234,7 @@ void storepkt(const char *base, struct packet *pkt, size_t datacnt,
 
   *lastfd = fd;
   *lastframe = pkt->hdr.frameno;
+  *lastpos = (pkt->hdr.index + datacnt) * sizeof(uint16_t);
 }
 
 /*! \brief Open UDP port for reading
@@ -242,7 +247,7 @@ void storepkt(const char *base, struct packet *pkt, size_t datacnt,
  *  \returns socket file descriptor, or a negative value
  *  on error.
  */
-int udpopen(int port)
+int udpopen(const char *host, int port)
 {
   int sock;
   struct sockaddr_in inaddr;
@@ -253,7 +258,7 @@ int udpopen(int port)
 
   inaddr.sin_family = AF_INET;
   inaddr.sin_port = htons(port);
-  inaddr.sin_addr.s_addr = htonl(INADDR_ANY);
+  inet_aton(host, &inaddr.sin_addr);
 
   if (bind(sock, (struct sockaddr *) &inaddr, sizeof(inaddr)) < 0) {
     close(sock);
@@ -276,43 +281,54 @@ int udpopen(int port)
 void readimages(const char *base, int sock)
 {
   static uint8_t databuf[sizeof(struct packet)];
+  static uint8_t prvbuf[sizeof(struct packet)];
   static struct packet pkt;
+  int prvset = 0;
   size_t pktdatacnt;
   int lastfd = -1;		/* last open file descriptor */
+  off_t lastpos = 0;		/* last file position */
   uint32_t lastframeno = 0;
   int nr;
+  int first = 1;
+  int time;
+  int frame;
 
   /* loop until error on the read */
   for (;;) {
 
-    if (pixelcnt >= 0) {
-      fprintf(stderr, "- Waiting for 1st packet ...");
+    if (first) {
+      fprintf(stderr, "- Waiting for frame...");
       fflush(stderr);
     }
 
     /* read a UPD packet */
     nr = recv(sock, databuf, sizeof(databuf), 0);
 
-    if (pixelcnt >= 0) {
-      fprintf(stderr, "Running\n");
-      fflush(stderr);
+    if (nr < 0)
+      break;
+
+    if (nr > 0) {
+      if (sscanf((const char *)databuf,
+		 "%d : Starting Frame - %d\n",
+		 &time, &frame) == 2) {
+	printf("%d : Starting Frame - %d\n", time, frame);
+	first = 0;
+	continue;
+      }
     }
 
-    if (pixelcnt < 0) {
-      /* has a header, must contain at least the header size */
-      if (nr < sizeof(struct packet_hdr))
-	break;
-    }
-    else if (nr < 0) {
-      /* no header, so just look for simple recv error */
-      break;
-    }
+    if (prvset)
+      if (memcmp(prvbuf, databuf, nr) == 0)
+	printf("DUPLICATE PACKET\n");
+
+    memcpy(prvbuf, databuf, nr);
+    prvset = 1;
 
     /* parse the packet */
     pktdatacnt = parsepkt(databuf, nr, &pkt);
 
     /* store to file */
-    storepkt(base, &pkt, pktdatacnt, &lastframeno, &lastfd);
+    storepkt(base, &pkt, pktdatacnt, &lastframeno, &lastfd, &lastpos);
   }
 
   /* close out cached open file descriptor */
@@ -338,36 +354,22 @@ int main(int argc, char **argv)
 {
   int sock;
 
-  if (argc < 3) {
+  if (argc < 5) {
     fprintf(stderr, "%s\n", usage);
     return -1;
   }
 
-  if (argc == 4) {
-    pixelcnt = atoi(argv[3]);
-    frameno = 0;
-    pixelindex = 0;
-  }
+  pixelcnt = atoi(argv[4]);
+  frameno = 0;
+  pixelindex = 0;
 
-  if (pixelcnt >= 0) {
-    fprintf(stderr, "- Ensure Zynq board is off\n");
-    fprintf(stderr, "  Hit <Enter> when ready\n");
-    fflush(stderr);
-    fgetc(stdin);
-  }
-
-  sock = udpopen(atoi(argv[1]));
+  sock = udpopen(argv[2],atoi(argv[3]));
   if (sock < 0) {
     perror("udpopen");
     return -1;
   }
 
-  if (pixelcnt >= 0) {
-    fprintf(stderr, "- Power on Zynq board\n");
-    fflush(stderr);
-  }
-
-  readimages(argv[2],sock);
+  readimages(argv[1],sock);
 
   close (sock);
 
