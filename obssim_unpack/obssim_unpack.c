@@ -16,9 +16,9 @@
 #include <assert.h>
 
 static const char usage[] = 
-  "Usage: obssim_unpack <localip> <port> <basedir> <pixelcnt>\n" \
+  "Usage: obssim_unpack <localip> <port> <prefix> <pixelcnt>\n" \
   " where: <port> is the UDP port number to bind to\n" \
-  "        <basedir> is the base directory for stored image files\n" \
+  "        <prefix> is the image file base directory and filename prefix\n" \
   "        <pixelcnt> number of 16-bit values (pixels/hk) in a frame\n\n" \
   "\n" \
   " note: <pixelcnt> is used for Littlefield/Zynq software that\n" \

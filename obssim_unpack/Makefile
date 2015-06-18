@@ -9,12 +9,13 @@ all: obssim_unpack
 check: unit_obssim_unpack obssim_unpack
 	./unit_obssim_unpack
 
-#./obssim_unpack 1234 ./
+#./obssim_unpack 192.168.100.3 5555 ./frames/tst 17756160
 
 clean:
 	rm -rf obssim_unpack unit_obssim_unpack
 	rm -rf *.dSYM
 	rm -rf *.o *.gcda *.gcno *.gcov
+	rm -rf test
 
 obssim_unpack: obssim_unpack.c
 	$(CC) $(CFLAGS) obssim_unpack.c -o $@
