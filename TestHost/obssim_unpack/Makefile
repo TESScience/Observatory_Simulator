@@ -21,10 +21,12 @@ obssim_unpack: obssim_unpack.c
 	$(CC) $(CFLAGS) obssim_unpack.c -o $@
 
 unit_obssim_unpack: unit_obssim_unpack.cpp obssim_unpack.c gtest-all.o
-	$(CPP) $(CPPFLAGS) unit_obssim_unpack.cpp gtest-all.o -o $@
+	$(CPP) $(CPPFLAGS) unit_obssim_unpack.cpp gtest-all.o -o $@ -lpthread
 
 gtest-all.o:
-	$(CPP) $(CPPFLAGS) -I../gtest-1.7.0 -c ../gtest-1.7.0/src/gtest-all.cc
+	$(CPP) $(CPPFLAGS) \
+	-I../gtest-1.7.0 \
+	-c ../gtest-1.7.0/src/gtest-all.cc
 
 gcov: check
 	gcov --branch-counts --branch-probabilities unit_obssim_unpack.cpp

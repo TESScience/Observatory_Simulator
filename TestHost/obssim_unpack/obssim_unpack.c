@@ -152,7 +152,7 @@ size_t parsepkt(const uint8_t *buf, size_t len, struct packet *pkt)
     /* no header, so count frames assuming we're in sync */
     pixelindex += pktdatacnt;	/* number of pixels in the packet */
 
-    if (pixelindex >= pixelcnt) {
+    if (pixelindex >= (size_t) pixelcnt) {
       /* completed a frame */
       frameno++;		/* bump the frame number */
       pixelindex = 0;		/* reset the pixel index within the frame */
@@ -217,7 +217,7 @@ void storepkt(const char *base, struct packet *pkt, size_t datacnt,
   }
 
   /* seek to indexed location within the file */
-  if (*lastpos != (pkt->hdr.index * sizeof(uint16_t))) {
+  if (*lastpos != (off_t)(pkt->hdr.index * sizeof(uint16_t))) {
     /*
     if (lseek(fd, pkt->hdr.index * sizeof(uint16_t), SEEK_SET) < 0) {
       perror("lseek");
