@@ -171,7 +171,9 @@ ssize_t reader_readimage(struct obssim_reader *reader)
       if (reader->index != 0) {
 	fprintf(stderr, "short frame %d : Starting Frame - %d\n", time, frame);
       }
-
+      else {
+	fprintf(stderr, "%d : Starting Frame - %d\n", time, frame);
+      }
       reader->index = 0;
       reader->frameno = frame;	/* set the frame number enabling pixel */
       /* next packet will overwrite this data in the image buffer */
@@ -210,6 +212,8 @@ int reader_writefile(struct obssim_reader *reader)
 
   snprintf(filename, sizeof(filename),
 	   "%s%s-%d.bin", reader->prefix, "obssim", (int)reader->frameno);
+
+  fprintf(stderr, "writing file %s\n", filename);
 
   fd = open(filename, O_CREAT | O_WRONLY, 0666);
 

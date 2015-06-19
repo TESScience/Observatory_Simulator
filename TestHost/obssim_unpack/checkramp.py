@@ -1,13 +1,22 @@
 #!/usr/bin/python
 
 import struct
+import sys
 
-fileno=0
+usage="""./checkramp.py <namepattern> <starting frame>
+for example: ./checkramp.py ./frames/obssim-%d.bin 39
+"""
+if len(sys.argv) < 3:
+    print usage
+    sys.exit(-1)
+
+fileno=int(sys.argv[2])
 ramp=-1
 
 while True:
-    fname = "./test/obssim-%d.bin" % (fileno,)
+    fname = sys.argv[1] % (fileno,)
     try:
+        print "checking",fname
         fp = file(fname)
         data = fp.read(2)
         while data:
