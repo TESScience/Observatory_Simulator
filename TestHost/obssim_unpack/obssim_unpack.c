@@ -16,14 +16,12 @@
 #include <assert.h>
 
 static const char usage[] = 
-  "Usage: obssim_unpack <localip> <port> <prefix> <pixelcnt>\n" \
-  " where: <port> is the UDP port number to bind to\n" \
+  "Usage: obssim_unpack <prefix> <localip> <port> <pixelcnt>\n" \
+  " where:\n" \
   "        <prefix> is the image file base directory and filename prefix\n" \
-  "        <pixelcnt> number of 16-bit values (pixels/hk) in a frame\n\n" \
-  "\n" \
-  " note: <pixelcnt> is used for Littlefield/Zynq software that\n" \
-  "       omits a frame header and only contains pixel/housekeeping\n" \
-  "       values.\n";
+  "        <localip> is the local IP address assigned to the ethernet port\n" \
+  "        <port> is the UDP port number to bind to\n" \
+  "        <pixelcnt> number of 16-bit values (pixels/hk) in a frame\n\n";
 
 /*! \brief Reader state variables */
 struct obssim_reader
