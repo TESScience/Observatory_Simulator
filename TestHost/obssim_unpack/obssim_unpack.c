@@ -229,7 +229,7 @@ int reader_writefile(struct obssim_reader *reader)
     return -1;
   }
 
-  if (nr != wrlen)
+  if (nr != (ssize_t) wrlen)
     fprintf(stderr, "warn: short write %d, expected %d\n",
 	    (int) nr, (int) wrlen);
 

@@ -105,7 +105,7 @@ protected:
 
     for (size_t ii = 0; ii < buflen; ii++)
       if (buf[ii] != fgetc(fp))
-	fprintf(stderr, "Mismatch byte %lu\n", ii);
+	fprintf(stderr, "Mismatch byte %d\n", (int) ii);
 
     rewind(fp);
 
