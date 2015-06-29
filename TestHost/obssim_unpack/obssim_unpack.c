@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -36,6 +37,7 @@ struct obssim_reader
   size_t index;	      /**< current pixel in frame */
   size_t houselen;    /**< Number of bytes in housekeeping */
   uint32_t *housebuf; /**< Housekeeping buffer (128 values) */
+  size_t pktcnt;      /**< Number of packets received since Start of Frame */
 };
 
 /*! \brief Release reader resources
@@ -169,6 +171,7 @@ ssize_t reader_readimage(struct obssim_reader *reader)
 
   /* wait for a new start of frame */
   reader->index = 0;
+  reader->pktcnt = 0;
 
   /* while not a full frame */
   while (reader->index < reader->pixelcnt) {
@@ -179,11 +182,12 @@ ssize_t reader_readimage(struct obssim_reader *reader)
 
     /* read a packet */
     nr = recv(reader->sock, ptr, size, 0);
-
+    
     if (nr < 0) {
       perror("recv");
       return -1;
     }
+    reader->pktcnt++;
 
     /* check for a start of frame */
     if (sscanf((const char *) ptr,
@@ -192,18 +196,25 @@ ssize_t reader_readimage(struct obssim_reader *reader)
 
       if (reader->index != 0) {
 	fprintf(stderr, "short frame %d : Starting Frame - %d\n", time, frame);
+	fprintf(stderr, "  index = %d (%f 1024 blocks)\n",
+		(int) reader->index,
+		((float) reader->index) / 1024);
+	fprintf(stderr, "  pktcnt = %d (including this pkt)\n",
+		(int) reader->pktcnt);
       }
       else {
 	fprintf(stderr, "%d : Starting Frame - %d\n", time, frame);
       }
       reader->index = 0;
       reader->frameno = frame;	/* set the frame number enabling pixel */
+      reader->pktcnt = 0;
       /* next packet will overwrite this data in the image buffer */
     }
     else if ((nr >= (strlen("Housekeeping") + reader->houselen)) &&
 	     (memcmp((const char *) ptr,
 		     "Housekeeping",
 		     strlen("Housekeeping")) == 0)) {
+      fprintf(stderr, "Housekeeping\n");
       memcpy(reader->housebuf,
 	     ptr + strlen("Housekeeping"),
 	     reader->houselen);
