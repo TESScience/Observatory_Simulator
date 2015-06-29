@@ -16,6 +16,8 @@
 #include <assert.h>
 
 static const char usage[] = 
+  "obssim_unpack - Read UDP packets and write image and housekeeping files\n" \
+  "\n" \
   "Usage: obssim_unpack <prefix> <localip> <port> <pixelcnt>\n" \
   " where:\n" \
   "        <prefix> is the image file base directory and filename prefix\n" \
@@ -32,12 +34,15 @@ struct obssim_reader
   size_t pixelcnt;    /**< # pixels in a frame */
   ssize_t frameno;    /**< current frame number or -1 if no frame yet */
   size_t index;	      /**< current pixel in frame */
+  size_t houselen;    /**< Number of bytes in housekeeping */
+  uint32_t *housebuf; /**< Housekeeping buffer (128 values) */
 };
 
 /*! \brief Release reader resources
  *
  *  \details
- *  If image buffer allocated, free it; if UDP open, close it.
+ *  If image buffer allocated, free it; if housekeeping allocated, free it;
+ *  if UDP open, close it.
  *
  *  \param reader Reader state variables
  */
@@ -50,6 +55,10 @@ void reader_close(struct obssim_reader *reader)
   if (reader->imagebuf != 0)
     free(reader->imagebuf);
   reader->imagebuf = 0;
+
+  if (reader->housebuf != 0)
+    free(reader->housebuf);
+  reader->housebuf = 0;
 
   if (reader->prefix != 0)
     free(reader->prefix);
@@ -80,6 +89,7 @@ int reader_init(struct obssim_reader *reader,
 
   reader->prefix = 0;
   reader->imagebuf = 0;
+  reader->housebuf = 0;
   reader->sock = -1;
 
   /* copy the prefix string */
@@ -95,6 +105,16 @@ int reader_init(struct obssim_reader *reader,
   reader->imagebuf = (uint16_t *) malloc(pixelcnt * sizeof(uint16_t));
 
   if (reader->imagebuf == 0) {
+    perror("malloc");
+    reader_close(reader);	/* release resources */
+    return -1;
+  }
+
+  /* allocate housekeeping buffer */
+  reader->houselen = 128 * sizeof(uint32_t);
+  reader->housebuf = (uint32_t *) malloc(reader->houselen);
+
+  if (reader->housebuf == 0) {
     perror("malloc");
     reader_close(reader);	/* release resources */
     return -1;
@@ -131,7 +151,9 @@ int reader_init(struct obssim_reader *reader,
  *  \details
  *  Reads and discards packets until we receive a "Start Frame"
  *  packet, then accumulate pixels into the image buffer until
- *  the pixel count is read.
+ *  the pixel count is read. If we receive housekeeping, store it
+ *  in the housekeeping buffer (regardless of whether or not we've
+ *  received a start frame).
  *
  *  \param reader Reader state variables
  *
@@ -177,6 +199,14 @@ ssize_t reader_readimage(struct obssim_reader *reader)
       reader->index = 0;
       reader->frameno = frame;	/* set the frame number enabling pixel */
       /* next packet will overwrite this data in the image buffer */
+    }
+    else if ((nr >= (strlen("Housekeeping") + reader->houselen)) &&
+	     (memcmp((const char *) ptr,
+		     "Housekeeping",
+		     strlen("Housekeeping")) == 0)) {
+      memcpy(reader->housebuf,
+	     ptr + strlen("Housekeeping"),
+	     reader->houselen);
     }
     else if (reader->frameno >= 0) {
 
@@ -234,6 +264,50 @@ int reader_writefile(struct obssim_reader *reader)
   if (nr != (ssize_t) wrlen)
     fprintf(stderr, "warn: short write %d, expected %d\n",
 	    (int) nr, (int) wrlen);
+
+  close(fd);
+
+  return 0;
+}
+
+/*! \brief Write housekeeping to file
+ *
+ *  \details
+ *  Write read housekeeping to file, using the prefix as the
+ *  base directory/filename specifier.
+ *
+ *  \param reader Reader state variables containing the housekeeping
+ *
+ *  \return 0 on success, -1 on error
+ */
+int reader_writehk(struct obssim_reader *reader)
+{
+  char filename[80];
+  int fd;
+  ssize_t nw;
+
+  snprintf(filename, sizeof(filename),
+	   "%s%s-%d.bin", reader->prefix, "obssim-hk", (int)reader->frameno);
+
+  fprintf(stderr, "writing file %s\n", filename);
+
+  fd = open(filename, O_CREAT | O_WRONLY, 0666);
+
+  if (fd < 0) {
+    perror(filename);
+    return -1;
+  }
+
+  nw = write(fd, reader->housebuf, reader->houselen);
+
+  if (nw < 0) {
+    perror("write");
+    return -1;
+  }
+
+  if (nw != (ssize_t) reader->houselen)
+    fprintf(stderr, "warn: short write %d, expected %d\n",
+	    (int) nw, (int) reader->houselen);
 
   close(fd);
 
