@@ -38,10 +38,6 @@ void reader_close(OBSSIM_READER *reader)
   if (reader->housebuf != 0)
     free(reader->housebuf);
   reader->housebuf = 0;
-
-  if (reader->prefix != 0)
-    free(reader->prefix);
-  reader->prefix = 0;
 }
  
 /*! \brief Initialize reader structure and open the UDP port
@@ -217,7 +213,7 @@ int reader_writefile(OBSSIM_READER *reader, const char *prefix)
   ssize_t nr;
 
   snprintf(filename, sizeof(filename),
-	   "%s%s-%d.bin", reader->prefix, "obssim", (int)reader->frameno);
+	   "%s%s-%d.bin", prefix, "obssim", (int)reader->frameno);
 
   fprintf(stderr, "writing file %s\n", filename);
 
@@ -253,17 +249,17 @@ int reader_writefile(OBSSIM_READER *reader, const char *prefix)
  *  base directory/filename specifier.
  *
  *  \param reader Reader state variables containing the housekeeping
- *
+ *  \param prefix Prefix to generated filenames
  *  \return 0 on success, -1 on error
  */
-int reader_writehk(OBSSIM_READER *reader)
+int reader_writehk(OBSSIM_READER *reader, const char *prefix)
 {
   char filename[80];
   int fd;
   ssize_t nw;
 
   snprintf(filename, sizeof(filename),
-	   "%s%s-%d.bin", reader->prefix, "obssim-hk", (int)reader->frameno);
+	   "%s%s-%d.bin", prefix, "obssim-hk", (int)reader->frameno);
 
   fprintf(stderr, "writing file %s\n", filename);
 

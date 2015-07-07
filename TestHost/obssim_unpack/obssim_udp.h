@@ -1,3 +1,6 @@
+#ifndef obssim_udp_h
+#define obssim_udp_h 1
+
 #include <sys/types.h>
 #include <stdint.h>
 
@@ -5,7 +8,6 @@
 /*! \brief Reader state variables */
 typedef struct 
 {
-  char *prefix;	      /**< Output filename prefix, including directory */
   uint16_t *imagebuf; /**< Single frame image buffer */
   int sock;	      /**< UDP socket */
   size_t pixelcnt;    /**< # pixels in a frame */
@@ -26,9 +28,4 @@ int reader_init(OBSSIM_READER *reader,
 ssize_t reader_readimage(OBSSIM_READER *reader);
 int reader_writefile(OBSSIM_READER *reader, const char *prefix);
 
-
-
-
-
-
-
+#endif /* obssim_udp_h */
