@@ -17,8 +17,8 @@ clean:
 	rm -rf *.o *.gcda *.gcno *.gcov
 	rm -rf test
 
-obssim_unpack: obssim_unpack.c
-	$(CC) $(CFLAGS) obssim_unpack.c -o $@
+obssim_unpack: obssim_udp_main.c obssim_unpack.c
+	$(CC) $(CFLAGS) $^ -o $@
 
 unit_obssim_unpack: unit_obssim_unpack.cpp obssim_unpack.c gtest-all.o
 	$(CPP) $(CPPFLAGS) unit_obssim_unpack.cpp gtest-all.o -o $@ -lpthread
