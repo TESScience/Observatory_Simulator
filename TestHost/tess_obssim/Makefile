@@ -19,7 +19,7 @@ LIBS	= ${CFITSIO_LNK} -lpthread -lm -ldl
 	${CC} ${CFLAGS} ${INCS} -c $< -o $@
 
 clean:
-	rm -rf *.o obssim2fits *~
+	rm -rf *.o obssim2fits tess_obssim *~
 
 
 obssim2fits: obssim2fits.o tess_utils.o tess_fits.o tess_notes.o gps.o 
