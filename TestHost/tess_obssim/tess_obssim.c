@@ -75,7 +75,7 @@ static void parseArgs(int argc, char **argv)
 	  usage();
 	}
       }
-      if (!strcmp(argv[i],"-n")){
+      else if (!strcmp(argv[i],"-n")){
 	if (sscanf(argv[++i],"%u",&frame_num) !=1){
 	  fprintf(stderr,"illegal number of frames %s\n", argv[i]);
 	  usage();
