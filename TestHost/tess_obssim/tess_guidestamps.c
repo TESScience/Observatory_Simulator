@@ -167,8 +167,8 @@ int centroid(CCD_FRAME *field , GuideStamp *stamp, int rad){
   //Check if the brightest pixel is close enougth to the center of the box.
   //
   
-  if ((abs(iimax - (field->x_size -1)/2) > 2)
-      || (abs(jjmax - (field->y_size -1)/2) > 2)){
+  if ((abs((int)(iimax - (field->x_size -1)/2) > 2))
+      || (abs((int)(jjmax - (field->y_size -1)/2) > 2))){
   
     fprintf(stderr, "Not using Photometric centroiding for star %s.\n",stamp->id);
     stamp->flux = stamp->min;  // use the minimum since we don't calculate it.
