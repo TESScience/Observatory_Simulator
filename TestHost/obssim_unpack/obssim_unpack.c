@@ -103,8 +103,8 @@ int reader_init(struct obssim_reader *reader,
     return -1;
   }
 
-  /* allocate image buffer */
-  reader->imagebuf = (uint16_t *) malloc(pixelcnt * sizeof(uint16_t));
+  /* allocate image buffer + 1 byte for null termination */
+  reader->imagebuf = (uint16_t *) malloc(pixelcnt * sizeof(uint16_t) + 1);
 
   if (reader->imagebuf == 0) {
     perror("malloc");
@@ -172,13 +172,14 @@ ssize_t reader_readimage(struct obssim_reader *reader)
   /* wait for a new start of frame */
   reader->index = 0;
   reader->pktcnt = 0;
+  reader->frameno = -1;
 
   /* while not a full frame */
   while (reader->index < reader->pixelcnt) {
 
     /* setup pointer and room remaining in image buffer */
     ptr = (uint8_t *) &reader->imagebuf[reader->index];
-    size = (reader->pixelcnt - reader->index) * sizeof(*reader->imagebuf);
+    size = (reader->pixelcnt - reader->index) * sizeof(reader->imagebuf[0]);
 
     /* read a packet */
     nr = recv(reader->sock, ptr, size, 0);
@@ -187,7 +188,9 @@ ssize_t reader_readimage(struct obssim_reader *reader)
       perror("recv");
       return -1;
     }
+
     reader->pktcnt++;
+    ptr[nr] = '\0';		/* null terminate */
 
     /* check for a start of frame */
     if (sscanf((const char *) ptr,
@@ -195,12 +198,8 @@ ssize_t reader_readimage(struct obssim_reader *reader)
 	       &time, &frame) == 2) {
 
       if (reader->index != 0) {
-	fprintf(stderr, "short frame %d : Starting Frame - %d\n", time, frame);
-	fprintf(stderr, "  index = %d (%f 1024 blocks)\n",
-		(int) reader->index,
-		((float) reader->index) / 1024);
-	fprintf(stderr, "  pktcnt = %d (including this pkt)\n",
-		(int) reader->pktcnt);
+	fprintf(stderr, "short frame %d : Starting Frame - %d index = %d\n",
+		time, frame, (int)reader->index);
       }
       else {
 	fprintf(stderr, "%d : Starting Frame - %d\n", time, frame);
@@ -365,6 +364,7 @@ int main(int argc, char **argv)
 
     if (reader_writefile(&reader) < 0)
       break;
+
   }
 
   reader_close(&reader);
