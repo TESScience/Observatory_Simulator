@@ -27,5 +27,6 @@ int reader_init(OBSSIM_READER *reader,
 		size_t pixelcnt);
 ssize_t reader_readimage(OBSSIM_READER *reader);
 int reader_writefile(OBSSIM_READER *reader, const char *prefix);
+int reader_writehk(OBSSIM_READER *reader, const char *prefix);
 
 #endif /* obssim_udp_h */

@@ -51,6 +51,9 @@ int main(int argc, char **argv)
 
     if (reader_writefile(&reader,prefix) < 0)
       break;
+
+    if (reader_writehk(&reader,prefix) < 0)
+      break;
   }
 
   reader_close(&reader);
