@@ -147,7 +147,7 @@ int main(int argc, char **argv)
   OBSSIM_READER reader;
   double mexp;
   char *char_ptr;
-  int started;
+  int started __attribute__((unused));
   int imagesize;
   CCD_FRAME *input_frame;
   CCD_FRAME *descrambled_frame;

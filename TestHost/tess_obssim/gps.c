@@ -20,7 +20,7 @@ double gps_now()
   struct timezone tz;
   tz.tz_minuteswest =0;
   tz.tz_dsttime =0;
-  int rc;
+  int rc __attribute__((unused));
   double gps;
   rc = gettimeofday(&tt,&tz);
   gps = tt.tv_sec + tt.tv_usec*1.e-6 - GPSEPOCH  +get_leaps(tt.tv_sec);
