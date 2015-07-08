@@ -171,7 +171,7 @@ ssize_t reader_readimage(OBSSIM_READER *reader)
       reader->pktcnt = 0;
       /* next packet will overwrite this data in the image buffer */
     }
-    else if ((nr >= (strlen("Housekeeping") + reader->houselen)) &&
+    else if ((nr >= (strlen("Housekeeping") + (size_t) reader->houselen)) &&
 	     (memcmp((const char *) ptr,
 		     "Housekeeping",
 		     strlen("Housekeeping")) == 0)) {
