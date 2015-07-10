@@ -9,39 +9,23 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
 #include <assert.h>
-
-static const char usage[] = 
-  "Usage: obssim_unpack <prefix> <localip> <port> <pixelcnt>\n" \
-  " where:\n" \
-  "        <prefix> is the image file base directory and filename prefix\n" \
-  "        <localip> is the local IP address assigned to the ethernet port\n" \
-  "        <port> is the UDP port number to bind to\n" \
-  "        <pixelcnt> number of 16-bit values (pixels/hk) in a frame\n\n";
-
-/*! \brief Reader state variables */
-struct obssim_reader
-{
-  char *prefix;	      /**< Output filename prefix, including directory */
-  uint16_t *imagebuf; /**< Single frame image buffer */
-  int sock;	      /**< UDP socket */
-  size_t pixelcnt;    /**< # pixels in a frame */
-  ssize_t frameno;    /**< current frame number or -1 if no frame yet */
-  size_t index;	      /**< current pixel in frame */
-};
+#include "obssim_udp.h"
 
 /*! \brief Release reader resources
  *
  *  \details
- *  If image buffer allocated, free it; if UDP open, close it.
+ *  If image buffer allocated, free it; if housekeeping allocated, free it;
+ *  if UDP open, close it.
  *
  *  \param reader Reader state variables
  */
-void reader_close(struct obssim_reader *reader)
+void reader_close(OBSSIM_READER *reader)
 {
   if (reader->sock >= 0)
     close(reader->sock);
@@ -51,9 +35,9 @@ void reader_close(struct obssim_reader *reader)
     free(reader->imagebuf);
   reader->imagebuf = 0;
 
-  if (reader->prefix != 0)
-    free(reader->prefix);
-  reader->prefix = 0;
+  if (reader->housebuf != 0)
+    free(reader->housebuf);
+  reader->housebuf = 0;
 }
  
 /*! \brief Initialize reader structure and open the UDP port
@@ -70,31 +54,31 @@ void reader_close(struct obssim_reader *reader)
  *
  *  \returns 0 on success, otherwise negated error code
  */
-int reader_init(struct obssim_reader *reader,
-		const char *prefix,
+int reader_init(OBSSIM_READER *reader,
 		const char *ipaddr,
 		int port,
 		size_t pixelcnt)
 {
   struct sockaddr_in inaddr;
 
-  reader->prefix = 0;
   reader->imagebuf = 0;
+  reader->housebuf = 0;
   reader->sock = -1;
 
-  /* copy the prefix string */
-  reader->prefix = strdup(prefix);
+  /* allocate image buffer + 1 byte for null termination */
+  reader->imagebuf = (uint16_t *) malloc(pixelcnt * sizeof(uint16_t) + 1);
 
-  if (reader->prefix == 0) {
-    perror("strdup");
-    reader_close(reader);
+  if (reader->imagebuf == 0) {
+    perror("malloc");
+    reader_close(reader);	/* release resources */
     return -1;
   }
 
-  /* allocate image buffer */
-  reader->imagebuf = (uint16_t *) malloc(pixelcnt * sizeof(uint16_t));
+  /* allocate housekeeping buffer */
+  reader->houselen = 256 * sizeof(uint16_t);
+  reader->housebuf = (uint16_t *) malloc(reader->houselen);
 
-  if (reader->imagebuf == 0) {
+  if (reader->housebuf == 0) {
     perror("malloc");
     reader_close(reader);	/* release resources */
     return -1;
@@ -131,13 +115,15 @@ int reader_init(struct obssim_reader *reader,
  *  \details
  *  Reads and discards packets until we receive a "Start Frame"
  *  packet, then accumulate pixels into the image buffer until
- *  the pixel count is read.
+ *  the pixel count is read. If we receive housekeeping, store it
+ *  in the housekeeping buffer (regardless of whether or not we've
+ *  received a start frame).
  *
  *  \param reader Reader state variables
  *
  *  \returns Number of pixels read into the image buffer, or -1 on error
  */
-ssize_t reader_readimage(struct obssim_reader *reader)
+ssize_t reader_readimage(OBSSIM_READER *reader)
 {
   uint8_t *ptr;
   size_t size;
@@ -147,21 +133,26 @@ ssize_t reader_readimage(struct obssim_reader *reader)
 
   /* wait for a new start of frame */
   reader->index = 0;
+  reader->pktcnt = 0;
+  reader->frameno = -1;
 
   /* while not a full frame */
   while (reader->index < reader->pixelcnt) {
 
     /* setup pointer and room remaining in image buffer */
     ptr = (uint8_t *) &reader->imagebuf[reader->index];
-    size = (reader->pixelcnt - reader->index) * sizeof(*reader->imagebuf);
+    size = (reader->pixelcnt - reader->index) * sizeof(reader->imagebuf[0]);
 
     /* read a packet */
     nr = recv(reader->sock, ptr, size, 0);
-
+    
     if (nr < 0) {
       perror("recv");
       return -1;
     }
+
+    reader->pktcnt++;
+    ptr[nr] = '\0';		/* null terminate */
 
     /* check for a start of frame */
     if (sscanf((const char *) ptr,
@@ -169,14 +160,25 @@ ssize_t reader_readimage(struct obssim_reader *reader)
 	       &time, &frame) == 2) {
 
       if (reader->index != 0) {
-	fprintf(stderr, "short frame %d : Starting Frame - %d\n", time, frame);
+	fprintf(stderr, "short frame %d : Starting Frame - %d index = %d\n",
+		time, frame, (int)reader->index);
       }
       else {
 	fprintf(stderr, "%d : Starting Frame - %d\n", time, frame);
       }
       reader->index = 0;
       reader->frameno = frame;	/* set the frame number enabling pixel */
+      reader->pktcnt = 0;
       /* next packet will overwrite this data in the image buffer */
+    }
+    else if ((nr >= (int)(strlen("Housekeeping")+(size_t) reader->houselen)) &&
+	     (memcmp((const char *) ptr,
+		     "Housekeeping",
+		     strlen("Housekeeping")) == 0)) {
+      fprintf(stderr, "Housekeeping\n");
+      memcpy(reader->housebuf,
+	     ptr + strlen("Housekeeping"),
+	     reader->houselen);
     }
     else if (reader->frameno >= 0) {
 
@@ -203,7 +205,7 @@ ssize_t reader_readimage(struct obssim_reader *reader)
  *
  *  \return 0 on success, -1 on error
  */
-int reader_writefile(struct obssim_reader *reader)
+int reader_writefile(OBSSIM_READER *reader, const char *prefix)
 {
   char filename[80];
   int fd;
@@ -211,7 +213,7 @@ int reader_writefile(struct obssim_reader *reader)
   ssize_t nr;
 
   snprintf(filename, sizeof(filename),
-	   "%s%s-%d.bin", reader->prefix, "obssim", (int)reader->frameno);
+	   "%s%s-%d.bin", prefix, "obssim", (int)reader->frameno);
 
   fprintf(stderr, "writing file %s\n", filename);
 
@@ -240,49 +242,47 @@ int reader_writefile(struct obssim_reader *reader)
   return 0;
 }
 
-/*! \brief Main to read and assemble images from the observatory sim
+/*! \brief Write housekeeping to file
  *
  *  \details
- *  Listens for UDP packets on the observatory simulator port,
- *  assembles the pixel values in corresponding data files.
+ *  Write read housekeeping to file, using the prefix as the
+ *  base directory/filename specifier.
  *
- *  \param argc Number of arguments
- *  \param argv[0] program name
- *  \param argv[1] output name prefix, including directory
- *  \param argv[2] IP address of host ethernet device connected to obs sim
- *  \param argv[3] UDP port number to connect to
- *  \param argv[4] Number of pixels in a frame
- *
- *  \returns 0 on success, non-zero on error
+ *  \param reader Reader state variables containing the housekeeping
+ *  \param prefix Prefix to generated filenames
+ *  \return 0 on success, -1 on error
  */
-int main(int argc, char **argv)
+int reader_writehk(OBSSIM_READER *reader, const char *prefix)
 {
-  struct obssim_reader reader;
-  const char *prefix;
-  const char *ipaddr;
-  int port;
-  size_t pixelcnt;
+  char filename[80];
+  int fd;
+  ssize_t nw;
 
-  if (argc < 5) {
-    fprintf(stderr, "%s\n", usage);
+  snprintf(filename, sizeof(filename),
+	   "%s%s-%d.bin", prefix, "obssim-hk", (int)reader->frameno);
+
+  fprintf(stderr, "writing file %s\n", filename);
+
+  fd = open(filename, O_CREAT | O_WRONLY, 0666);
+
+  if (fd < 0) {
+    perror(filename);
     return -1;
   }
 
-  prefix = argv[1];
-  ipaddr = argv[2];
-  port = atoi(argv[3]);
-  pixelcnt = atoi(argv[4]);
+  nw = write(fd, reader->housebuf, reader->houselen);
 
-  if (reader_init(&reader, prefix, ipaddr, port, pixelcnt) < 0)
+  if (nw < 0) {
+    perror("write");
     return -1;
-
-  while (reader_readimage(&reader) >= 0) {
-
-    if (reader_writefile(&reader) < 0)
-      break;
   }
 
-  reader_close(&reader);
+  if (nw != (ssize_t) reader->houselen)
+    fprintf(stderr, "warn: short write %d, expected %d\n",
+	    (int) nw, (int) reader->houselen);
+
+  close(fd);
 
   return 0;
 }
+

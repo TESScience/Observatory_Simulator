@@ -6,12 +6,16 @@ extern "C" {
 #include <unistd.h>
 #include <sys/socket.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #define main obssim_unpack_main
   int obssim_unpack_main(int argc, char **argv);
 
 #define strdup stub_strdup
-  char *stub_strdup(const char *s1);
+  char *stub_strdup(const char *define);
+
+#define malloc stub_malloc
+  void *stub_malloc(size_t size);
 
 #define write stub_write
   ssize_t stub_write(int fd, const void *buf, size_t nbyte);
@@ -23,9 +27,10 @@ extern "C" {
      ssize_t stub_recv(int socket, void *buffer, size_t length, int flags);
 
 #include "obssim_unpack.c"
+#include "obssim_udp_main.c"
 
 #undef main
-#undef strdup
+#undef malloc
 #undef write
 #undef socket
 #undef recv
@@ -34,14 +39,14 @@ extern "C" {
 
 #include <gtest/gtest.h>
 
-int stub_strduperr = 0;
-char *stub_strdup(const char *s1)
+int stub_mallocerr = 0;
+void *stub_malloc(size_t size)
 {
-  if (stub_strduperr) {
+  if (stub_mallocerr) {
     errno = ENOMEM;
     return 0;
   }
-  return strdup(s1);
+  return malloc(size);
 }
 
 ssize_t stub_writeerr = 0;
@@ -84,7 +89,7 @@ protected:
   virtual void SetUp() {
     mkdir("test",0777);
 
-    stub_strduperr = 0;
+    stub_mallocerr = 0;
     stub_writeerr = 0;
     stub_socketerr = 0;
     stub_recvflag = 0;
@@ -142,7 +147,7 @@ TEST_F(Test_obssim_unpack, main_initerr)
     pixelcnt
   };
 
-  stub_strduperr = 1;
+  stub_mallocerr = 1;
   ASSERT_EQ(-1, obssim_unpack_main(5, argv));
 }
 
@@ -219,35 +224,29 @@ TEST_F(Test_obssim_unpack, main_writeok)
   ASSERT_EQ(0, obssim_unpack_main(5, argv));
 }
 
-TEST_F(Test_obssim_unpack, init_strduperr)
-{
-  /* covered earlier */
-  SUCCEED();
-}
-
 TEST_F(Test_obssim_unpack, init_mallocerr)
 {
-  struct obssim_reader reader;
+  OBSSIM_READER reader;
 
-  ASSERT_EQ(-1, reader_init(&reader, "./test/", "127.0.0.1", 5555, -1));
+  ASSERT_EQ(-1, reader_init(&reader, "127.0.0.1", 5555, -1));
 }
 
 TEST_F(Test_obssim_unpack, init_socketerr)
 {
-  struct obssim_reader reader;
+  OBSSIM_READER reader;
 
   stub_socketerr = -1;
-  ASSERT_EQ(-1, reader_init(&reader, "./test/", "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(-1, reader_init(&reader, "127.0.0.1", 5555, 1024));
 }
 
 TEST_F(Test_obssim_unpack, init_binderr)
 {
-  struct obssim_reader reader1;
-  struct obssim_reader reader2;
+  OBSSIM_READER reader1;
+  OBSSIM_READER reader2;
 
   /* try to bind to same port twice on same interface */
-  ASSERT_EQ(0, reader_init(&reader1, "./test/", "127.0.0.1", 5555, 1024));
-  ASSERT_EQ(-1, reader_init(&reader2, "./test/", "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(0, reader_init(&reader1, "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(-1, reader_init(&reader2, "127.0.0.1", 5555, 1024));
 
   reader_close(&reader1);
 }
@@ -266,9 +265,9 @@ TEST_F(Test_obssim_unpack, read_startframe)
 
 TEST_F(Test_obssim_unpack, read_shortframe)
 {
-  struct obssim_reader reader;
+  OBSSIM_READER reader;
 
-  ASSERT_EQ(0, reader_init(&reader, "./test/", "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(0, reader_init(&reader, "127.0.0.1", 5555, 1024));
 
   /* fake frame in one packet */
   stub_recvflag = 4;
@@ -289,9 +288,9 @@ TEST_F(Test_obssim_unpack, read_shortframe)
 
 TEST_F(Test_obssim_unpack, read_garbage)
 {
-  struct obssim_reader reader;
+  OBSSIM_READER reader;
 
-  ASSERT_EQ(0, reader_init(&reader, "./test/", "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(0, reader_init(&reader, "127.0.0.1", 5555, 1024));
 
   /* fake frame in one packet */
   stub_recvflag = 4;
@@ -320,24 +319,24 @@ TEST_F(Test_obssim_unpack, write_ok)
 
 TEST_F(Test_obssim_unpack, write_err)
 {
-  struct obssim_reader reader;
+  OBSSIM_READER reader;
 
-  ASSERT_EQ(0, reader_init(&reader, "./test/", "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(0, reader_init(&reader, "127.0.0.1", 5555, 1024));
 
   stub_writeerr = -1;
-  ASSERT_EQ(-1, reader_writefile(&reader));
+  ASSERT_EQ(-1, reader_writefile(&reader, "./test"));
 
   reader_close(&reader);
 }
 
 TEST_F(Test_obssim_unpack, write_short)
 {
-  struct obssim_reader reader;
+  OBSSIM_READER reader;
 
-  ASSERT_EQ(0, reader_init(&reader, "./test/", "127.0.0.1", 5555, 1024));
+  ASSERT_EQ(0, reader_init(&reader, "127.0.0.1", 5555, 1024));
 
   stub_writeerr = 1023;
-  ASSERT_EQ(0, reader_writefile(&reader));
+  ASSERT_EQ(0, reader_writefile(&reader, "./test"));
 
   reader_close(&reader);
 }
