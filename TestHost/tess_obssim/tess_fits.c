@@ -5,6 +5,7 @@
 #include "tess_camlink.h"
 #include "tess_fits.h"
 #include "tess_utils.h"
+#include "tess_housekeeping.h"
 
 int read_fits(char *filename, CCD_FRAME *frame){
   int S=0;
@@ -209,6 +210,10 @@ int write_fits(CCD_FRAME *frame)
   for (ii = 0; ii<frame->numkeys; ii++)
     FITS_CHECK_ERROR(fits_write_key (fitsd, TSTRING, frame->keyword[ii],
 				     frame->keyvalue[ii], "",&fits_status));
+
+  
+  for (ii=0; ii< NUM_CAMERA_HK_VALS; ii++)
+    fprintf(stderr, "HK Value %d 0x%04x\n", ii, frame->hkvals[ii]);
 
   /* write image */
   if (frame->depth==16){
