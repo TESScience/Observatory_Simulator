@@ -240,6 +240,7 @@ int add_image(CCD_FRAME *in, CCD_FRAME *out)
     out->quality=in->quality;
   out->integration_time+=in->integration_time;
   out->stop_time=in->stop_time;
+  out->hkvals=in->hkvals;
   out->numFrames++;
   //  fprintf(stderr,"out: depth=%d, x=%ld, y=%ld\n", out->depth, out->x_size, out->y_size);
   for (x=0;x< out->x_size; x++)
@@ -320,6 +321,8 @@ int copyFrame(CCD_FRAME *dst, CCD_FRAME *src)
   dst->start_time=src->start_time;
   dst->stop_time=src->stop_time;  
   dst->numFrames=src->numFrames;
+  dst->hkvals=src->hkvals;
+
   if (src->run != NULL){
     if (dst->run ==0) dst->run=(char *)calloc(128,1);
     strcpy(dst->run,src->run);
@@ -377,6 +380,7 @@ int unscramble(CCD_FRAME *in, CCD_FRAME *out, uint16_t *colmap,int extra)
   out->integration_time = in->integration_time;
   out->start_time = in->start_time;
   out->stop_time = in->stop_time;
+  out->hkvals = in->hkvals;
   if (out->image == 0)
     out->image = calloc(in->x_size*in->y_size,sizeof(uint16_t));
   outdata = (uint16_t *)out->image;

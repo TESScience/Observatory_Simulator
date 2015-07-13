@@ -130,6 +130,7 @@ ssize_t reader_readimage(OBSSIM_READER *reader)
   int nr;
   int time;
   int frame;
+  static int scanning_msg = 0;
 
   /* wait for a new start of frame */
   reader->index = 0;
@@ -159,6 +160,8 @@ ssize_t reader_readimage(OBSSIM_READER *reader)
 	       "%d : Starting Frame - %d\n",
 	       &time, &frame) == 2) {
 
+      scanning_msg = 0;
+
       if (reader->index != 0) {
 	fprintf(stderr, "short frame %d : Starting Frame - %d index = %d\n",
 		time, frame, (int)reader->index);
@@ -187,8 +190,11 @@ ssize_t reader_readimage(OBSSIM_READER *reader)
     }
     else {
       /* no frame yet, toss the packet */
-      fprintf(stderr, "x");
-      fflush(stderr);
+      if (!scanning_msg) {
+	fprintf(stderr, "scanning for start of frame ...");
+	fflush(stderr);
+	scanning_msg = 1;
+      }
     }
   }
 
