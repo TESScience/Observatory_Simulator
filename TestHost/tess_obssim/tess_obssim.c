@@ -318,6 +318,7 @@ int main(int argc, char **argv)
 	fprintf(stderr,"about to unscramble\n");
 	*/
 	input_frame->image = reader.imagebuf;
+	input_frame->hkvals = reader.housebuf;
 	unscramble(input_frame, descrambled_frame,colmap, doScramble);
 
 	posErr = centroidGuideStamps(descrambled_frame,GuideStamps, GuideStampHKFile);

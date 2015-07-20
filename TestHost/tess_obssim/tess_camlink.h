@@ -1,6 +1,7 @@
 #ifndef _TESSCAMLINK_H
 #define _TESSCAMLINK_H
 #include <time.h>
+#include "tess_housekeeping.h" 
 
 #define FRAME_TRANSFER_TIME 0.015
 
@@ -47,6 +48,8 @@ typedef struct {
   int crop[4];
   char *command;
   STAR_CENTER *cen;
+  CAMERA_HK_DEF *hkdefs;
+  uint16_t *hkvals;
 } CCD_FRAME;
 
 #endif
