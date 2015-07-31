@@ -18,7 +18,7 @@ def getoutputarr(sheet):
         i+=1
         val = sheet.cell(i,25).value
     n = int(sheet.cell(0,26).value)
-    data+=['0']*(n-len(data))
+    #data+=['0']*(n-len(data))
     return data
 
 def packbin(dataarr):
