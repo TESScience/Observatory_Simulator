@@ -33,7 +33,7 @@ class Value32(ValueType):
 class CLVValue(Value16):
     def pack(self,stream=''):
         """Combines address and value of a particular voltage input"""
-        return stream + struct.pack(">"+self.format,self.address*2**12+self.value)
+        return stream + struct.pack(">"+self.format,self.address%8*2**12+self.value)
 
 class CLVMem:
     """Contains values for CLV Memory. Each attribute is at a particular
