@@ -133,7 +133,7 @@ int centroid(CCD_FRAME *field , GuideStamp *stamp, int rad){
   int ii, jj;
   int iimax, jjmax, max;
   int flux;
-  unsigned short *short_ptr=field->image;
+  short *short_ptr=field->image;
   int *int_ptr;
   double xd,yd;
   int xb,xt,yb,yt,npix,med,xdim __attribute__((unused)),ydim __attribute__((unused)),p;

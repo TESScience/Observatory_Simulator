@@ -20,6 +20,7 @@
 #include "gps.h"
 #include "obssim_udp.h"
 #include "camera.h"
+#include "tess_housekeeping.h"
 
 static void usage () {
   fprintf(stderr,"Usage:\ttess_camlink\t-n <number of output frames> default is 1\n"
@@ -36,14 +37,14 @@ static void usage () {
 	  "\t\t\t-g <file of guide stamps>\n"
 	  "\t\t\t-s <file of column map> \n"
 	  "\t\t\t-p <UDP port> \n"
-	  "\t\t\t-a <IP address> \n");
+	  "\t\t\t-a <IP address> default is 7777\n");
   exit(EXIT_FAILURE);
 }
 
 GuideStampList *GuideStamps;
 int do_write_fits = 1;
 int UDPport=7777;
-char IPaddr[20]="192.168.100.3";
+char IPaddr[20]="192.168.100.2";
 int Integrate=1;
 int doScramble=1;
 double exposure=0.0;
@@ -220,7 +221,7 @@ int main(int argc, char **argv)
   colmap = (uint16_t *) calloc(input_frame->x_size,sizeof(uint16_t));
 
   if (doScramble == 0){
-    descrambled_frame->image =(void *)calloc(4096*4096,sizeof(uint16_t));
+    descrambled_frame->image =(void *)calloc(4096*4096,sizeof(int16_t));
     descrambled_frame->x_size = 4096;
     descrambled_frame->y_size = 4096;
     if (read_colmap(colmapFileName,colmap) != 0){
@@ -233,7 +234,7 @@ int main(int argc, char **argv)
     descrambled_frame->x_size = input_frame->x_size/2;
     descrambled_frame->y_size = input_frame->y_size*2;
     if (read_colmap(colmapFileName,colmap) != 0 ){
-      fprintf(stderr,"No unscamling.\n");
+      fprintf(stderr,"No unscrambling.\n");
       doScramble = -1;
     }
   }  
@@ -249,7 +250,7 @@ int main(int argc, char **argv)
       fprintf(stderr,"Invalid cropped image size.\n");
       exit(7);
     }
-    cropped_frame->image=(unsigned short*)calloc(croppedsize,sizeof(unsigned short));
+    cropped_frame->image=(short*)calloc(croppedsize,sizeof(short));
     if (cropped_frame->image == NULL){
       fprintf(stderr,"Unable to allocate %d bytes for cropped imgage.\n",croppedsize);
       exit(8);
@@ -292,6 +293,7 @@ int main(int argc, char **argv)
 	  fprintf(stderr,"readimage error: only read %d pixels", rd);
 	  exit(EXIT_FAILURE);
 	}
+
 	tt1=gps_now();
 	fprintf(stderr,"image %d frame %d %lf %lf %lf %lf %lf\n",j,i,tt0,tt1,tt2,tt1-tt0, tt2-tt1);
 	mexp=tt1-tt0;
@@ -317,10 +319,15 @@ int main(int argc, char **argv)
 	print_CCD_FRAME(stderr,cropped_frame);
 	fprintf(stderr,"about to unscramble\n");
 	*/
+
 	input_frame->image = reader.imagebuf;
 	input_frame->hkvals = reader.housebuf;
+	for (ii=2; ii< NUM_CAMERA_HK_VALS; ii++){
+	  fprintf(stderr, "HK Group %d, index %d, raw 0x%04x, %d\n", 
+		  input_frame->hkvals[0], ii-2, input_frame->hkvals[ii], 
+		  twosC2int(input_frame->hkvals[ii]) );
+	}
 	unscramble(input_frame, descrambled_frame,colmap, doScramble);
-
 	posErr = centroidGuideStamps(descrambled_frame,GuideStamps, GuideStampHKFile);
 	if (doCrop)
 	  crop_image(descrambled_frame, cropped_frame,crop);

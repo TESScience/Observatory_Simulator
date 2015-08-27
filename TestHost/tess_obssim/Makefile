@@ -25,5 +25,13 @@ clean:
 obssim2fits: obssim2fits.o tess_utils.o tess_fits.o tess_notes.o gps.o 
 	$(CC) $(CFLAGS) $^ -o $@ ${LIBS}
 
-tess_obssim: tess_obssim.o obssim_unpack.o tess_guidestamps.o tess_utils.o tess_fits.o tess_notes.o gps.o nthi.o
+tess_obssim: tess_obssim.o obssim_unpack.o tess_housekeeping.o tess_guidestamps.o tess_utils.o tess_fits.o tess_notes.o gps.o nthi.o
+	$(CC) $(CFLAGS) $^ -o $@ ${LIBS}
+
+
+readHK: readHK.o  obssim_unpack.o tess_housekeeping.o gps.o
+	$(CC) $(CFLAGS) $^ -o $@ ${LIBS}
+
+
+test_housekeeping: test_housekeeping.o tess_housekeeping.o
 	$(CC) $(CFLAGS) $^ -o $@ ${LIBS}

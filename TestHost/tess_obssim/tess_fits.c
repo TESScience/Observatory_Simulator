@@ -19,7 +19,7 @@ int read_fits(char *filename, CCD_FRAME *frame){
   char comment[64];
   char tok[2] = "_";
   char *token;
-  uint16_t *ptr;
+  int16_t *ptr;
   fpixel[0] = fpixel[1] = 1;
   fprintf(stderr,"reading file %s\n",filename);
   fits_open_file(&fptr,filename,READONLY,&S);
@@ -37,14 +37,14 @@ int read_fits(char *filename, CCD_FRAME *frame){
   frame->y_size = axes[1];
   frame->depth = bitpix = 16;
   if (frame->depth == 16)
-    frame->image = (uint16_t *)calloc(axes[0]*axes[1],sizeof(uint16_t));
+    frame->image = (int16_t *)calloc(axes[0]*axes[1],sizeof(int16_t));
   if (frame->image == NULL){
     fprintf(stderr, "error allocating memory for image\n");
     return 1;
   }
-  ptr = (uint16_t *) frame->image;
+  ptr = (int16_t *) frame->image;
   for (ii=0; ii< axes[1]; ii++){
-    fits_read_img(fptr,TUSHORT,1+ii*axes[0],axes[0],NULL,ptr+ii*axes[0],&anynul,&s);
+    fits_read_img(fptr,TSHORT,1+ii*axes[0],axes[0],NULL,ptr+ii*axes[0],&anynul,&s);
     fits_report_error(stderr,s);
   }
   fprintf(stderr, "got image %u %u %u \n",ptr[0],ptr[2], ptr[9231]);
@@ -68,8 +68,8 @@ int write_fits(CCD_FRAME *frame)
   int naxis=2;
   long group=0;
   POINTING_STATS stats;
-  unsigned short * short_ptr=(unsigned short *)frame->image;
-  unsigned long * long_ptr=(unsigned long *)frame->image;
+  short * short_ptr=(short *)frame->image;
+  long * long_ptr=(long *)frame->image;
 
   if (frame->cen !=0){
     centroid_stats(frame->cen, &stats,2.0);
@@ -89,10 +89,10 @@ int write_fits(CCD_FRAME *frame)
   FITS_CHECK_ERROR(fits_create_file (&fitsd, out_file_name, &fits_status));
 
   if (frame->depth == 16){
-    FITS_CHECK_ERROR(fits_create_img (fitsd, USHORT_IMG, naxis, naxes, 
+    FITS_CHECK_ERROR(fits_create_img (fitsd, SHORT_IMG, naxis, naxes, 
 				      &fits_status));
   }else if(frame->depth == 32){
-    FITS_CHECK_ERROR(fits_create_img (fitsd, ULONG_IMG, naxis, naxes, 
+    FITS_CHECK_ERROR(fits_create_img (fitsd, LONG_IMG, naxis, naxes, 
     		     &fits_status));
   }  else{
     fprintf(stderr,"Can't deal with image depth of %d\n",frame->depth);
@@ -211,16 +211,13 @@ int write_fits(CCD_FRAME *frame)
     FITS_CHECK_ERROR(fits_write_key (fitsd, TSTRING, frame->keyword[ii],
 				     frame->keyvalue[ii], "",&fits_status));
 
-  
-  for (ii=0; ii< NUM_CAMERA_HK_VALS; ii++)
-    fprintf(stderr, "HK Value %d 0x%04x\n", ii, frame->hkvals[ii]);
 
   /* write image */
   if (frame->depth==16){
-    FITS_CHECK_ERROR(fits_write_2d_usht (fitsd, group, naxes[0],naxes[0],
+    FITS_CHECK_ERROR(fits_write_2d_sht (fitsd, group, naxes[0],naxes[0],
 				      naxes[1], short_ptr, &fits_status));
   } else {
-    FITS_CHECK_ERROR(fits_write_2d_ulng (fitsd, group, naxes[0],naxes[0],
+    FITS_CHECK_ERROR(fits_write_2d_lng (fitsd, group, naxes[0],naxes[0],
 				      naxes[1], long_ptr, &fits_status));
   }
  
@@ -239,8 +236,8 @@ int write_stamp(CCD_FRAME *frame,GuideStamp *stamp)
   long naxes[2];
   int naxis=2;
   long group=0;
-  unsigned short * short_ptr=(unsigned short *)frame->image;
-  unsigned long * long_ptr=(unsigned long *)frame->image;
+  short * short_ptr=(short *)frame->image;
+  long * long_ptr=(long *)frame->image;
   if (frame->image == NULL)
     {
       fprintf(stderr,"write_fits: No image in frame->\n");
@@ -255,10 +252,10 @@ int write_stamp(CCD_FRAME *frame,GuideStamp *stamp)
   FITS_CHECK_ERROR(fits_create_file (&fitsd, out_file_name, &fits_status));
 
   if (frame->depth == 16){
-    FITS_CHECK_ERROR(fits_create_img (fitsd, USHORT_IMG, naxis, naxes, 
+    FITS_CHECK_ERROR(fits_create_img (fitsd, SHORT_IMG, naxis, naxes, 
 				      &fits_status));
   }else if(frame->depth == 32){
-    FITS_CHECK_ERROR(fits_create_img (fitsd, ULONG_IMG, naxis, naxes, 
+    FITS_CHECK_ERROR(fits_create_img (fitsd, LONG_IMG, naxis, naxes, 
     		     &fits_status));
   }  else{
     fprintf(stderr,"Can't deal with image depth of %d\n",frame->depth);
@@ -313,10 +310,10 @@ int write_stamp(CCD_FRAME *frame,GuideStamp *stamp)
 
   /* write image */
   if (frame->depth==16){
-    FITS_CHECK_ERROR(fits_write_2d_usht (fitsd, group, naxes[0],naxes[0],
+    FITS_CHECK_ERROR(fits_write_2d_sht (fitsd, group, naxes[0],naxes[0],
 				      naxes[1], short_ptr, &fits_status));
   } else {
-    FITS_CHECK_ERROR(fits_write_2d_ulng (fitsd, group, naxes[0],naxes[0],
+    FITS_CHECK_ERROR(fits_write_2d_lng (fitsd, group, naxes[0],naxes[0],
 				      naxes[1], long_ptr, &fits_status));
   }
  

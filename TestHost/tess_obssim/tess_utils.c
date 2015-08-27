@@ -205,9 +205,9 @@ void freeFrame(CCD_FRAME* frame)
 int add_image(CCD_FRAME *in, CCD_FRAME *out)
 {
   int x, y;
-  unsigned long *in_long=(unsigned long *)in->image;
-  unsigned short *in_short=(unsigned short*)in->image;
-  unsigned long *out_long=(unsigned long *)out->image;
+  long *in_long=(long *)in->image;
+  short *in_short=(short*)in->image;
+  long *out_long=(long *)out->image;
   if (in == out){
     fprintf(stderr,"add_image error. Don't add an image to itself\n");
     return(1);
@@ -258,8 +258,8 @@ int add_image(CCD_FRAME *in, CCD_FRAME *out)
 //===================================================================
 int long_image(CCD_FRAME *in, CCD_FRAME *out)
 {
-  unsigned long *out_long;
-  unsigned short *in_short=(unsigned short *)in->image;
+  long *out_long;
+  short *in_short=(short *)in->image;
   int x, y;
   if (in->depth == 32){
     fprintf(stderr,"long_image error: image is already 32 bits.\n");
@@ -268,7 +268,7 @@ int long_image(CCD_FRAME *in, CCD_FRAME *out)
   copyFrame(out, in);
   out->depth=32;
 
-  out_long=(unsigned long *)calloc(out->x_size*out->y_size,sizeof(unsigned long));
+  out_long=(long *)calloc(out->x_size*out->y_size,sizeof(long));
   out->image=(void *)out_long;
   for (x=0;x< out->x_size; x++)
     for (y=0;y< out->y_size; y++)
@@ -280,10 +280,10 @@ int crop_image(CCD_FRAME *in, CCD_FRAME *out, int crop[4])
 {
   int xx, yy;
   int x, y;
-  unsigned long *in_long=(unsigned long *)in->image;
-  unsigned long *out_long;
-  unsigned short *in_short=(unsigned short *)in->image;
-  unsigned short *out_short;
+  long *in_long=(long *)in->image;
+  long *out_long;
+  short *in_short=(short *)in->image;
+  short *out_short;
 
   copyFrame(out,in);
   out->x_size=crop[1]-crop[0]+1;
@@ -291,11 +291,11 @@ int crop_image(CCD_FRAME *in, CCD_FRAME *out, int crop[4])
   for (xx=0;xx<4; xx++)
     out->crop[xx]=crop[xx];
   if (in->depth==16)
-    out->image = (void *)calloc(out->x_size*out->y_size, sizeof(unsigned short));
+    out->image = (void *)calloc(out->x_size*out->y_size, sizeof(short));
   else
-    out->image= (void *)calloc(out->x_size*out->y_size, sizeof(unsigned long));
-  out_short=(unsigned short *)out->image;
-  out_long=(unsigned long *)out->image;
+    out->image= (void *)calloc(out->x_size*out->y_size, sizeof(long));
+  out_short=(short *)out->image;
+  out_long=(long *)out->image;
   //  fprintf(stderr,"out: depth=%d, x=%ld, y=%ld\n", out->depth, out->x_size, out->y_size);
   for (x=0,xx=crop[0];x< out->x_size; x++,xx++)
     for (y=0,yy=crop[2];y< out->y_size; y++,yy++)
@@ -367,7 +367,7 @@ int unscramble(CCD_FRAME *in, CCD_FRAME *out, uint16_t *colmap,int extra)
   int row, pixel;
   int x, y;
   int16_t *indata;
-  uint16_t *outdata;
+  int16_t *outdata;
   int col;
   int ii=0;
   strcpy(out->run, in->run);
@@ -382,8 +382,8 @@ int unscramble(CCD_FRAME *in, CCD_FRAME *out, uint16_t *colmap,int extra)
   out->stop_time = in->stop_time;
   out->hkvals = in->hkvals;
   if (out->image == 0)
-    out->image = calloc(in->x_size*in->y_size,sizeof(uint16_t));
-  outdata = (uint16_t *)out->image;
+    out->image = calloc(in->x_size*in->y_size,sizeof(int16_t));
+  outdata = (int16_t *)out->image;
   indata = (int16_t *)in->image;
   out->depth = in->depth;
   if (extra == -1){ // no unscrambling
@@ -403,7 +403,7 @@ int unscramble(CCD_FRAME *in, CCD_FRAME *out, uint16_t *colmap,int extra)
 	  y = row;
 	x = colmap[col] & 0x3fff;
 	//	fprintf(stderr,"x: %d y: %d ii: %d data: %u\n",x,y,ii,indata[ii]);
-	outdata[y*out->x_size+x] = ((unsigned short) 32767) - indata[ii++];
+	outdata[y*out->x_size+x] =  indata[ii++];
       }
     }
   }
@@ -421,7 +421,7 @@ int unscramble(CCD_FRAME *in, CCD_FRAME *out, uint16_t *colmap,int extra)
 	else{
 	  x = colmap[col] & 0x3fff;
 	//	fprintf(stderr,"x: %d y: %d ii: %d data: %u\n",x,y,ii,indata[ii]);
-	  outdata[y*out->x_size+x] = ((unsigned short) 32767) - indata[ii++];
+	  outdata[y*out->x_size+x] =  indata[ii++];
 	}
       }
     }

@@ -48,7 +48,7 @@ typedef struct {
   int crop[4];
   char *command;
   STAR_CENTER *cen;
-  CAMERA_HK_DEF *hkdefs;
+  CAMERA_HK_DEFS *hkdefs;
   uint16_t *hkvals;
 } CCD_FRAME;
 
