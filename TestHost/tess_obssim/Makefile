@@ -1,6 +1,6 @@
 VPATH=.:../obssim_unpack
 CC=gcc
-CFLAGS=-g -Wall -Werror
+CFLAGS=-g -Wall -Werror -O3
 
 all: obssim2fits tess_obssim
 
